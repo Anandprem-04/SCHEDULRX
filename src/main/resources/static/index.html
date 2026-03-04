@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchedulrX | CPU Scheduler Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        skybg:     '#f0f9ff',
+                        skycard:   '#e0f2fe',
+                        skyedge:   '#bae6fd',
+                        skytext:   '#0c4a6e',
+                        skyaccent: '#0284c7',
+                        cyberbg:   '#030d12',
+                        cybercard: '#03161e',
+                        cyberedge: '#083344',
+                        cybertxt:  '#00e5ff',
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'monospace'],
+                        sans: ['Syne', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-skybg dark:bg-cyberbg min-h-screen pb-16 font-sans text-skytext dark:text-slate-100 transition-colors duration-300">
+
+<div class="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+    <div class="blob blob-1 dark:opacity-0 transition-opacity duration-500"></div>
+    <div class="blob blob-2 dark:opacity-0 transition-opacity duration-500"></div>
+    <div class="blob blob-d1 opacity-0 dark:opacity-100 transition-opacity duration-500"></div>
+    <div class="blob blob-d2 opacity-0 dark:opacity-100 transition-opacity duration-500"></div>
+</div>
+
+<header class="sticky top-0 z-50 backdrop-blur-md bg-skybg/80 dark:bg-cyberbg/90 border-b border-skyedge dark:border-cyberedge transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-skyaccent dark:bg-cybertxt flex items-center justify-center shadow-lg logo-pulse">
+                <span class="text-white dark:text-cyberbg font-black text-sm font-mono">SX</span>
+            </div>
+            <div>
+                <h1 class="text-lg font-black tracking-tighter text-skytext dark:text-cybertxt font-mono uppercase leading-none">SchedulrX</h1>
+                <p class="text-[9px] font-bold uppercase tracking-widest text-sky-400 dark:text-cyan-800 font-mono hidden sm:block mt-0.5">CPU Scheduling Visualizer</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="clearAllProcesses()"
+                    class="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 text-xs font-bold rounded-lg uppercase font-mono hover:bg-red-100 dark:hover:bg-red-900/40 transition-all active:scale-95 duration-150">
+                Reset
+            </button>
+            <button onclick="toggleTheme()"
+                    class="w-9 h-9 rounded-xl bg-skycard dark:bg-cyberedge border border-skyedge dark:border-cyan-900 flex items-center justify-center hover:scale-110 transition-all duration-200">
+                <span id="theme-icon" class="text-base">🌙</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <div class="flex flex-col lg:grid lg:grid-cols-12 gap-6 items-start">
+
+        <aside class="w-full lg:col-span-3 lg:sticky lg:top-20 anim-left">
+            <div class="bg-white/70 dark:bg-cybercard/90 backdrop-blur-sm rounded-2xl border border-skyedge dark:border-cyberedge shadow-sm p-5 space-y-4">
+                <p class="text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-cyan-700 font-mono">Algorithm</p>
+
+                <select id="algo-select" onchange="handleAlgoChange()"
+                        class="w-full p-3 bg-skybg dark:bg-cyberbg text-skytext dark:text-cybertxt rounded-xl border border-skyedge dark:border-cyberedge font-bold text-sm outline-none focus:ring-2 focus:ring-skyaccent dark:focus:ring-cybertxt font-mono cursor-pointer transition-all">
+                    <option value="FCFS">FCFS — First Come First Serve</option>
+                    <option value="SJF">SJF — Shortest Job First</option>
+                    <option value="SRTF">SRTF — Shortest Remaining Time</option>
+                    <option value="RR">RR — Round Robin</option>
+                    <option value="PRIORITY_NP">Priority (Non-Preemptive)</option>
+                    <option value="PRIORITY_P">Priority (Preemptive)</option>
+                </select>
+
+                <div id="quantum-container" class="hidden">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-cyan-700 font-mono block mb-1.5">Time Quantum</label>
+                    <input type="number" id="quantum-input" min="1" value="2"
+                           class="w-full p-3 bg-skybg dark:bg-cyberbg text-skyaccent dark:text-cybertxt border border-skyedge dark:border-cyberedge rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-skyaccent dark:focus:ring-cybertxt transition-all">
+                </div>
+
+                <button onclick="startSimulation()" id="run-btn"
+                        class="w-full py-3.5 bg-skyaccent dark:bg-cybertxt text-white dark:text-cyberbg rounded-xl font-black text-xs uppercase tracking-widest font-mono hover:opacity-90 active:scale-95 transition-all duration-150 shadow-md">
+                    ▶ Run Simulation
+                </button>
+
+                <div id="algo-info"
+                     class="text-[11px] text-sky-500 dark:text-cyan-800 font-mono leading-relaxed bg-skycard/60 dark:bg-cyberbg rounded-xl p-3 border border-skyedge dark:border-cyberedge">
+                    Processes executed in order of arrival. Non-preemptive. Simple but may cause convoy effect.
+                </div>
+            </div>
+        </aside>
+
+        <main class="w-full lg:col-span-9 space-y-6">
+
+            <section class="anim-right bg-white/70 dark:bg-cybercard/90 backdrop-blur-sm rounded-2xl border border-skyedge dark:border-cyberedge shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-skyedge/50 dark:border-cyberedge flex justify-between items-center">
+                    <h2 class="text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-cyan-700 font-mono">Process Queue</h2>
+                    <span id="process-counter"
+                          class="text-xs font-bold text-sky-400 dark:text-cyan-700 font-mono bg-skycard dark:bg-cyberbg px-2.5 py-1 rounded-lg border border-skyedge dark:border-cyberedge">
+                            0 / 15
+                        </span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left min-w-[380px]">
+                        <thead class="bg-skycard/40 dark:bg-cyberbg/60 border-b border-skyedge/50 dark:border-cyberedge">
+                        <tr id="table-header-row">
+                            <th class="py-3 px-5 text-[10px] font-black text-sky-400 dark:text-cyan-800 uppercase tracking-widest font-mono w-24">PID</th>
+                            <th class="py-3 px-4 text-[10px] font-black text-sky-400 dark:text-cyan-800 uppercase tracking-widest font-mono">Arrival</th>
+                            <th class="py-3 px-4 text-[10px] font-black text-sky-400 dark:text-cyan-800 uppercase tracking-widest font-mono">Burst</th>
+                            <th id="action-header" class="py-3 px-5 text-[10px] font-black text-sky-400 dark:text-cyan-800 uppercase tracking-widest font-mono text-right w-16">Del</th>
+                        </tr>
+                        </thead>
+                        <tbody id="process-table-body" class="divide-y divide-skyedge/30 dark:divide-cyberedge/50"></tbody>
+                    </table>
+                </div>
+
+                <div class="py-5 flex justify-center border-t border-skyedge/30 dark:border-cyberedge/50 bg-skycard/20 dark:bg-cyberbg/30">
+                    <button onclick="addProcessRow()"
+                            class="flex items-center gap-2 px-5 py-2.5 bg-white/80 dark:bg-cybercard border-2 border-dashed border-skyedge dark:border-cyberedge rounded-xl text-sky-400 dark:text-cyan-800 text-sm font-bold font-mono hover:border-skyaccent dark:hover:border-cybertxt hover:text-skyaccent dark:hover:text-cybertxt transition-all duration-200">
+                        + Add Process
+                    </button>
+                </div>
+            </section>
+
+            <section id="results-area" class="hidden space-y-6">
+                <div class="bg-white/70 dark:bg-cybercard/90 backdrop-blur-sm rounded-2xl border border-skyedge dark:border-cyberedge shadow-sm p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <h2 class="text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-cyan-700 font-mono">Gantt Chart</h2>
+                        <span id="gantt-algo-label"
+                              class="text-[10px] font-bold font-mono bg-skyaccent/10 dark:bg-cybertxt/10 text-skyaccent dark:text-cybertxt px-2.5 py-1 rounded-lg border border-skyaccent/20 dark:border-cybertxt/20">
+                            </span>
+                    </div>
+                    <div id="gantt-container" class="gantt-container"></div>
+                </div>
+                <div id="metrics-table-container"></div>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
