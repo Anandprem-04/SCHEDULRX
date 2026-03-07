@@ -6,7 +6,7 @@ let currentProcessCount = 0;
 const MAX_PROCESSES = 15;
 const pidColorMap = {};
 let colorCounter = 0;
-let lastSimulationData = null; // Tracks data for theme toggling
+let lastSimulationData = null;
 
 const ALGO_INFO = {
     FCFS:        "Processes execute in order of arrival. Non-preemptive. Simple but may cause convoy effect.",
@@ -17,43 +17,41 @@ const ALGO_INFO = {
     PRIORITY_P:  "Higher priority arrival preempts current process. Lower number = higher priority."
 };
 
-// Inline color palette — applied directly to gantt blocks and PID badges
-// Index matches proc-color-N in CSS (light/dark handled separately)
-const DARK_COLORS = [
-    { bg:'#0c4a6e', fg:'#7dd3fc' },
-    { bg:'#134e4a', fg:'#5eead4' },
-    { bg:'#164e63', fg:'#22d3ee' },
-    { bg:'#0e7490', fg:'#cffafe' },
-    { bg:'#155e75', fg:'#a5f3fc' },
-    { bg:'#065f46', fg:'#6ee7b7' },
-    { bg:'#0f766e', fg:'#99f6e4' },
-    { bg:'#1e40af', fg:'#bfdbfe' },
-    { bg:'#1d4ed8', fg:'#dbeafe' },
-    { bg:'#0369a1', fg:'#e0f2fe' },
-    { bg:'#0c4a6e', fg:'#38bdf8' },
-    { bg:'#0f766e', fg:'#2dd4bf' },
-    { bg:'#155e75', fg:'#67e8f9' },
-    { bg:'#0e7490', fg:'#bae6fd' },
-    { bg:'#065f46', fg:'#a7f3d0' },
+// Colour palettes — index matches proc-color-N in CSS
+const LIGHT_PAL = [
+    {bg:'#bfdbfe',fg:'#1e3a8a'},{bg:'#bbf7d0',fg:'#14532d'},{bg:'#fde68a',fg:'#78350f'},
+    {bg:'#fecdd3',fg:'#881337'},{bg:'#ddd6fe',fg:'#4c1d95'},{bg:'#fed7aa',fg:'#7c2d12'},
+    {bg:'#a5f3fc',fg:'#164e63'},{bg:'#c7d2fe',fg:'#312e81'},{bg:'#fbcfe8',fg:'#831843'},
+    {bg:'#a7f3d0',fg:'#065f46'},{bg:'#fef08a',fg:'#713f12'},{bg:'#99f6e4',fg:'#134e4a'},
+    {bg:'#e9d5ff',fg:'#581c87'},{bg:'#bae6fd',fg:'#0c4a6e'},{bg:'#fca5a5',fg:'#7f1d1d'}
+];
+const DARK_PAL = [
+    {bg:'#0c4a6e',fg:'#7dd3fc'},{bg:'#134e4a',fg:'#5eead4'},{bg:'#164e63',fg:'#22d3ee'},
+    {bg:'#0e7490',fg:'#cffafe'},{bg:'#155e75',fg:'#a5f3fc'},{bg:'#065f46',fg:'#6ee7b7'},
+    {bg:'#0f766e',fg:'#99f6e4'},{bg:'#1e40af',fg:'#bfdbfe'},{bg:'#1d4ed8',fg:'#dbeafe'},
+    {bg:'#0369a1',fg:'#e0f2fe'},{bg:'#0c4a6e',fg:'#38bdf8'},{bg:'#0f766e',fg:'#2dd4bf'},
+    {bg:'#155e75',fg:'#67e8f9'},{bg:'#0e7490',fg:'#bae6fd'},{bg:'#065f46',fg:'#a7f3d0'}
 ];
 
 function isDark() {
     return document.documentElement.classList.contains('dark');
 }
 
-/* ── Theme ──────────────────────────────────────────────────── */
+/* ── Theme toggle ───────────────────────────────────────────── */
 function toggleTheme() {
     const html = document.documentElement;
     const icon = document.getElementById("theme-icon");
     const dark = html.classList.toggle('dark');
+    html.classList.toggle('light', !dark);
     icon.style.transition = 'transform 0.4s ease';
-    icon.style.transform = 'rotate(360deg)';
+    icon.style.transform  = 'rotate(360deg)';
     setTimeout(() => icon.style.transform = '', 400);
     icon.innerText = dark ? "☀️" : "🌙";
 
-    // Re-render the charts if data exists so inline styles update to the new theme
+    // Re-render gantt blocks so inline colors update.
+    // Table updates automatically via CSS variables — no JS needed.
     if (lastSimulationData) {
-        renderResults(lastSimulationData);
+        renderGanttChart(lastSimulationData.ganttBlocks);
     }
 }
 
@@ -72,9 +70,9 @@ function handleAlgoChange() {
         info.style.opacity = "1"; info.style.transform = "translateY(0)";
     }, 180);
 
-    const headerRow = document.getElementById("table-header-row");
+    const headerRow  = document.getElementById("table-header-row");
     const existingPH = document.getElementById("prio-th");
-    const actionH = document.getElementById("action-header");
+    const actionH    = document.getElementById("action-header");
 
     if (isPriority && !existingPH) {
         const th = document.createElement("th");
@@ -105,7 +103,7 @@ function addProcessRow() {
     if (currentProcessCount >= MAX_PROCESSES) { showToast("Maximum 15 processes!"); return; }
     currentProcessCount++;
     const tbody = document.getElementById("process-table-body");
-    const row = document.createElement("tr");
+    const row   = document.createElement("tr");
     row.className = "row-enter hover:bg-sky-50 dark:hover:bg-cyberedge/20 transition-colors duration-150";
 
     const algo = document.getElementById("algo-select").value;
@@ -113,9 +111,8 @@ function addProcessRow() {
 
     let html = `
         <td class="py-3 px-5 font-black text-skyaccent dark:text-cybertxt font-mono text-sm">P${currentProcessCount}</td>
-        <td class="py-3 px-4"><input type="number" min="0" class="at w-20 bg-transparent text-skytext dark:text-slate-300 border-b-2 border-skyedge dark:border-cyberedge outline-none text-sm px-2 py-1 font-mono focus:border-skyaccent dark:focus:border-cybertxt transition-colors" value="0"></td>
-        <td class="py-3 px-4"><input type="number" min="1" class="bt w-20 bg-transparent text-skytext dark:text-slate-300 border-b-2 border-skyedge dark:border-cyberedge outline-none text-sm px-2 py-1 font-mono focus:border-skyaccent dark:focus:border-cybertxt transition-colors" value="1"></td>`;
-
+        <td class="py-3 px-4"><input type="number" min="0"  class="at w-20 bg-transparent text-skytext dark:text-slate-300 border-b-2 border-skyedge dark:border-cyberedge outline-none text-sm px-2 py-1 font-mono focus:border-skyaccent dark:focus:border-cybertxt transition-colors" value="0"></td>
+        <td class="py-3 px-4"><input type="number" min="1"  class="bt w-20 bg-transparent text-skytext dark:text-slate-300 border-b-2 border-skyedge dark:border-cyberedge outline-none text-sm px-2 py-1 font-mono focus:border-skyaccent dark:focus:border-cybertxt transition-colors" value="1"></td>`;
     if (isPriority) {
         html += `<td class="py-3 px-4 prio-td"><input type="number" min="1" class="priority w-20 bg-transparent text-skytext dark:text-cyan-400 border-b-2 border-skyedge dark:border-cyberedge outline-none text-sm px-2 py-1 font-mono focus:border-skyaccent dark:focus:border-cybertxt transition-colors" value="1"></td>`;
     }
@@ -134,7 +131,7 @@ function removeRow(btn) {
     setTimeout(() => { row.remove(); currentProcessCount--; updateCounter(); }, 200);
 }
 
-/* ── Clear ──────────────────────────────────────────────────── */
+/* ── Clear all ──────────────────────────────────────────────── */
 function clearAllProcesses() {
     const rows = document.querySelectorAll("#process-table-body tr");
     rows.forEach((r, i) => setTimeout(() => {
@@ -145,9 +142,9 @@ function clearAllProcesses() {
         document.getElementById("process-table-body").innerHTML = "";
         currentProcessCount = 0; updateCounter();
         document.getElementById("results-area").classList.add("hidden");
+        document.getElementById("results-area").classList.remove("visible");
         Object.keys(pidColorMap).forEach(k => delete pidColorMap[k]);
-        colorCounter = 0;
-        lastSimulationData = null; // Clear saved data on reset
+        colorCounter = 0; lastSimulationData = null;
     }, rows.length * 40 + 200);
 }
 
@@ -160,16 +157,16 @@ async function startSimulation() {
     const rows = document.querySelectorAll("#process-table-body tr");
     if (!rows.length) { showToast("Add at least one process!"); return; }
 
-    const algo = document.getElementById("algo-select").value;
+    const algo    = document.getElementById("algo-select").value;
     const quantum = algo === "RR" ? (parseInt(document.getElementById("quantum-input")?.value) || 2) : null;
 
     const payload = {
         algorithm: algo, quantum,
         processes: Array.from(rows).map(row => ({
-            pid: row.querySelector("td:first-child").innerText.trim(),
-            arrivalTime: parseInt(row.querySelector(".at").value) || 0,
-            burstTime: Math.max(1, parseInt(row.querySelector(".bt").value) || 1),
-            priority: row.querySelector(".priority") ? parseInt(row.querySelector(".priority").value) || 1 : 0
+            pid:         row.querySelector("td:first-child").innerText.trim(),
+            arrivalTime: parseInt(row.querySelector(".at").value)       || 0,
+            burstTime:   Math.max(1, parseInt(row.querySelector(".bt").value) || 1),
+            priority:    row.querySelector(".priority") ? parseInt(row.querySelector(".priority").value) || 1 : 0
         }))
     };
 
@@ -177,177 +174,196 @@ async function startSimulation() {
     btn.innerHTML = "⏳ Running..."; btn.disabled = true; btn.style.opacity = ".7";
 
     try {
-        const res = await fetch('/api/simulate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-        if (!res.ok) { const e = await res.json(); showToast(e.message || "Simulation failed!"); return; }
-
-        lastSimulationData = await res.json(); // Save data globally
-        renderResults(lastSimulationData);     // Pass saved data to render
-
-    } catch { showToast("Backend offline!"); }
-    finally { btn.innerHTML = "▶ Run Simulation"; btn.disabled = false; btn.style.opacity = "1"; }
+        const res  = await fetch('/api/simulate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); }
+        catch { showToast("Invalid server response."); return; }
+        if (!res.ok) { showToast(data.message || data.error || "Simulation failed!"); return; }
+        renderResults(data);
+    } catch (err) {
+        console.error("Simulation error:", err);
+        showToast("Error: " + err.message);
+    } finally {
+        btn.innerHTML = "▶ Run Simulation"; btn.disabled = false; btn.style.opacity = "1";
+    }
 }
 
-/* ── Render ─────────────────────────────────────────────────── */
+/* ── Render results ─────────────────────────────────────────── */
 function renderResults(data) {
+    lastSimulationData = data;
+
     const area = document.getElementById("results-area");
     area.classList.remove("hidden");
+    area.classList.add("visible");
+
     const lbl = document.getElementById("gantt-algo-label");
     if (lbl) lbl.innerText = data.algorithmUsed + (data.quantumUsed ? ` | Q=${data.quantumUsed}` : "");
+
     renderGanttChart(data.ganttBlocks);
     renderMetricsTable(data);
-    setTimeout(() => area.scrollIntoView({ behavior:"smooth", block:"start" }), 120);
+    setTimeout(() => area.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
 }
 
-/* ── Gantt ──────────────────────────────────────────────────── */
+/* ── Gantt chart ────────────────────────────────────────────── */
 function renderGanttChart(blocks) {
-    const container = document.getElementById("gantt-container");
-    container.innerHTML = "";
+    const blocksRow   = document.getElementById("gantt-blocks");
+    const timelineRow = document.getElementById("gantt-timeline");
+    if (!blocksRow || !timelineRow) return;
+    blocksRow.innerHTML   = "";
+    timelineRow.innerHTML = "";
     if (!blocks?.length) return;
 
-    blocks.forEach((block, i) => {
-        const dur = block.end - block.start;
-        const idle = block.pid === "IDLE";
-        const div = document.createElement("div");
-        div.className = "gantt-block" + (idle ? " idle-block" : "");
-        div.style.flex = `${Math.max(dur, 0.5)} 0 auto`;
-        div.style.minWidth = idle ? "36px" : "48px";
+    const dark = isDark();
 
-        // Set wipe delay via CSS custom property
-        div.style.setProperty('--wipe-delay', `${(i * 0.09).toFixed(2)}s`);
+    blocks.forEach((block, i) => {
+        const dur  = block.end - block.start;
+        const idle = block.pid === "IDLE";
+        const div  = document.createElement("div");
+
+        div.className = "gantt-block" + (idle ? " idle-block" : "");
+        div.style.flex     = `${Math.max(dur, 0.5)} 0 auto`;
+        div.style.minWidth = idle ? "36px" : "48px";
+        div.style.setProperty("--wipe-delay", `${(i * 0.09).toFixed(2)}s`);
 
         if (!idle) {
             if (pidColorMap[block.pid] === undefined) {
                 pidColorMap[block.pid] = colorCounter % 15;
                 colorCounter++;
             }
-            const ci = pidColorMap[block.pid];
-            // Apply colors inline so dark/light mode is guaranteed correct
-            if (isDark()) {
-                const c = DARK_COLORS[ci];
-                div.style.background = c.bg;
-                div.style.color = c.fg;
-            } else {
-                div.classList.add(`proc-color-${ci}`);
-            }
+            const ci  = pidColorMap[block.pid];
+            const pal = dark ? DARK_PAL[ci] : LIGHT_PAL[ci];
+            // Apply colours inline — reliable regardless of CSS cascade
+            div.style.background = pal.bg;
+            div.style.color      = pal.fg;
         }
 
-        // Shape corners
-        if (i === 0) div.style.borderRadius = "12px 0 0 12px";
-        if (i === blocks.length - 1) div.style.borderRadius = i === 0 ? "12px" : "0 12px 12px 0";
+        // Border radius
+        if (blocks.length === 1)          div.style.borderRadius = "12px";
+        else if (i === 0)                 div.style.borderRadius = "12px 0 0 12px";
+        else if (i === blocks.length - 1) div.style.borderRadius = "0 12px 12px 0";
 
-        div.title = idle ? `IDLE: ${block.start}→${block.end}` : `${block.pid}: ${block.start}→${block.end} (${dur}u)`;
+        div.title = idle
+            ? `CPU IDLE: ${block.start} → ${block.end} (${dur} units)`
+            : `${block.pid}: ${block.start} → ${block.end} (${dur} units)`;
 
         const label = document.createElement("span");
         label.innerText = idle ? "—" : block.pid;
         div.appendChild(label);
+        blocksRow.appendChild(div);
+    });
 
-        const sm = document.createElement("span");
-        sm.className = "time-marker"; sm.innerText = block.start;
-        div.appendChild(sm);
+    // Build timeline ticks after DOM paint
+    requestAnimationFrame(() => {
+        const blockEls = blocksRow.querySelectorAll(".gantt-block");
+        const totalW   = blocksRow.scrollWidth;
+        timelineRow.style.width = totalW + "px";
 
-        if (i === blocks.length - 1) {
-            const em = document.createElement("span");
-            em.className = "time-marker end-marker"; em.innerText = block.end;
-            div.appendChild(em);
+        const tickColor  = dark ? "#334155" : "#94a3b8";
+        const labelColor = dark ? "#64748b"  : "#1e293b";
+
+        let cumX = 0;
+        const seen = new Set();
+
+        blockEls.forEach((el, i) => {
+            const t = blocks[i].start;
+            if (!seen.has(t)) {
+                seen.add(t);
+                addTick(timelineRow, t, cumX, tickColor, labelColor);
+            }
+            cumX += el.offsetWidth;
+        });
+
+        // Final end tick
+        const lastT = blocks[blocks.length - 1].end;
+        if (!seen.has(lastT)) {
+            addTick(timelineRow, lastT, cumX, tickColor, labelColor);
         }
-
-        container.appendChild(div);
     });
 }
 
-/* ── Metrics table — 100% inline styles, zero Tailwind ──────── */
+function addTick(container, time, x, tickColor, labelColor) {
+    const tick  = document.createElement("div");
+    tick.className = "gantt-tick";
+    tick.style.left = x + "px";
+
+    const line = document.createElement("div");
+    line.className = "gantt-tick-line";
+    line.style.background = tickColor;
+
+    const lbl = document.createElement("div");
+    lbl.className = "gantt-tick-label";
+    lbl.style.color = labelColor;
+    lbl.innerText = time;
+
+    tick.appendChild(line);
+    tick.appendChild(lbl);
+    container.appendChild(tick);
+}
+
+/* ── Metrics table ───────────────────────────────────────────
+   Uses CSS classes that read from CSS variables set on <html>.
+   Theme switching is instant — no JS re-render required.
+   ─────────────────────────────────────────────────────────── */
 function renderMetricsTable(data) {
     const dark = isDark();
 
-    // Color tokens
-    const C = {
-        wrap:    dark ? '#03161e' : '#f8fafc',
-        border:  dark ? '#083344' : '#bae6fd',
-        headBg:  dark ? '#020d14' : '#f1f5f9',
-        headBdr: dark ? '#0a3344' : '#e2e8f0',
-        th:      dark ? '#0e7490' : '#7dd3fc',
-        divider: dark ? '#083344' : '#e2e8f0',
-        rowHov:  dark ? '#071c27' : '#f0f9ff',
-        footBg:  dark ? '#020d14' : '#f1f5f9',
-        label:   dark ? '#0e7490' : '#94a3b8',
-        muted:   dark ? '#475569' : '#94a3b8',
-        ct:      dark ? '#e2e8f0' : '#0f172a',
-        tat:     dark ? '#00e5ff' : '#0284c7',
-        wt:      dark ? '#22d3ee' : '#0ea5e9',
-        rt:      dark ? '#67e8f9' : '#38bdf8',
-    };
+    // Badge colours for PID cells (still inline since they're per-process)
+    function badge(pid) {
+        const ci  = pidColorMap[pid] ?? 0;
+        const pal = dark ? DARK_PAL[ci] : LIGHT_PAL[ci];
+        return `<span style="background:${pal.bg};color:${pal.fg};padding:3px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;display:inline-block">${pid}</span>`;
+    }
 
-    const th = (txt) => `<th style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:${C.th};white-space:nowrap">${txt}</th>`;
+    const th = (t) => `<th class="mt-th" style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;letter-spacing:3px;text-transform:uppercase;white-space:nowrap">${t}</th>`;
 
     let html = `
-    <div style="background:${C.wrap};border:1px solid ${C.border};border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
-      <div style="padding:14px 18px;border-bottom:1px solid ${C.headBdr};display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:${C.headBg}">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:${C.th}">Process Metrics</span>
+    <div class="mt-wrap" style="border:1px solid;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.12)">
+      <div class="mt-head" style="padding:14px 18px;border-bottom:1px solid;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+        <span class="mt-th" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;letter-spacing:4px;text-transform:uppercase">Process Metrics</span>
         <div style="display:flex;flex-wrap:wrap;gap:14px;font-family:'JetBrains Mono',monospace;font-size:11px">
-          <span style="color:${C.label}">Avg TAT: <b style="color:${C.tat}">${data.averageTAT.toFixed(2)}</b></span>
-          <span style="color:${C.label}">Avg WT: <b style="color:${C.wt}">${data.averageWT.toFixed(2)}</b></span>
-          <span style="color:${C.label}">Avg RT: <b style="color:${C.rt}">${data.averageRT.toFixed(2)}</b></span>
+          <span class="mt-label">Avg TAT: <b class="mt-tat">${data.averageTAT.toFixed(2)}</b></span>
+          <span class="mt-label">Avg WT: <b class="mt-wt">${data.averageWT.toFixed(2)}</b></span>
+          <span class="mt-label">Avg RT: <b class="mt-rt">${data.averageRT.toFixed(2)}</b></span>
         </div>
       </div>
       <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;text-align:center;min-width:500px">
-        <thead>
-          <tr style="background:${C.headBg};border-bottom:1px solid ${C.headBdr}">
-            ${['PID','Arrival','Burst','CT','TAT','WT','RT'].map(th).join('')}
-          </tr>
-        </thead>
-        <tbody>`;
+        <table style="width:100%;border-collapse:collapse;text-align:center;min-width:500px">
+          <thead>
+            <tr class="mt-head" style="border-bottom:1px solid">
+              ${['PID','Arrival','Burst','CT','TAT','WT','RT'].map(th).join('')}
+            </tr>
+          </thead>
+          <tbody>`;
 
-    data.metrics.forEach((p) => {
-        const ci = pidColorMap[p.pid] ?? 0;
-        // PID badge colors
-        let badgeBg, badgeFg;
-        if (dark) {
-            const c = DARK_COLORS[ci];
-            badgeBg = c.bg; badgeFg = c.fg;
-        } else {
-            // Extract from light CSS classes by lookup
-            const LIGHT = [
-                {bg:'#bfdbfe',fg:'#1e3a8a'},{bg:'#bbf7d0',fg:'#14532d'},{bg:'#fde68a',fg:'#78350f'},
-                {bg:'#fecdd3',fg:'#881337'},{bg:'#ddd6fe',fg:'#4c1d95'},{bg:'#fed7aa',fg:'#7c2d12'},
-                {bg:'#a5f3fc',fg:'#164e63'},{bg:'#c7d2fe',fg:'#312e81'},{bg:'#fbcfe8',fg:'#831843'},
-                {bg:'#a7f3d0',fg:'#065f46'},{bg:'#fef08a',fg:'#713f12'},{bg:'#99f6e4',fg:'#134e4a'},
-                {bg:'#e9d5ff',fg:'#581c87'},{bg:'#bae6fd',fg:'#0c4a6e'},{bg:'#fca5a5',fg:'#7f1d1d'}
-            ];
-            badgeBg = LIGHT[ci].bg; badgeFg = LIGHT[ci].fg;
-        }
-
-        const cell = (val, color, bold=false) =>
-            `<td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:${color};${bold?'font-weight:800;':''}">${val}</td>`;
-
+    data.metrics.forEach(p => {
         html += `
-          <tr class="metric-row"
-              style="border-bottom:1px solid ${C.divider}"
-              onmouseover="this.style.background='${C.rowHov}'"
-              onmouseout="this.style.background='transparent'">
-            <td style="padding:10px 14px">
-              <span style="background:${badgeBg};color:${badgeFg};padding:3px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;display:inline-block">${p.pid}</span>
-            </td>
-            ${cell(p.arrivalTime, C.muted)}
-            ${cell(p.burstTime, C.muted)}
-            ${cell(p.completionTime, C.ct, true)}
-            ${cell(p.turnaroundTime, C.tat, true)}
-            ${cell(p.waitingTime, C.wt, true)}
-            ${cell(p.responseTime, C.rt, true)}
-          </tr>`;
+            <tr class="mt-row" style="border-bottom:1px solid">
+              <td style="padding:10px 14px">${badge(p.pid)}</td>
+              <td class="mt-muted" style="padding:10px 14px;font-family:'JetBrains Mono',monospace">${p.arrivalTime}</td>
+              <td class="mt-muted" style="padding:10px 14px;font-family:'JetBrains Mono',monospace">${p.burstTime}</td>
+              <td class="mt-ct"    style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-weight:800">${p.completionTime}</td>
+              <td class="mt-tat"   style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-weight:800">${p.turnaroundTime}</td>
+              <td class="mt-wt"    style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-weight:800">${p.waitingTime}</td>
+              <td class="mt-rt"    style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-weight:800">${p.responseTime}</td>
+            </tr>`;
     });
 
     html += `
-        </tbody>
-        <tfoot>
-          <tr style="background:${C.footBg};border-top:1px solid ${C.border}">
-            <td colspan="4" style="padding:10px 14px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:${C.th}">Average</td>
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-weight:800;color:${C.tat}">${data.averageTAT.toFixed(2)}</td>
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-weight:800;color:${C.wt}">${data.averageWT.toFixed(2)}</td>
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-weight:800;color:${C.rt}">${data.averageRT.toFixed(2)}</td>
-          </tr>
-        </tfoot>
-      </table>
+          </tbody>
+          <tfoot>
+            <tr class="mt-foot" style="border-top:1px solid">
+              <td colspan="4" class="mt-th" style="padding:10px 14px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;letter-spacing:3px;text-transform:uppercase">Average</td>
+              <td class="mt-tat" style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-weight:800">${data.averageTAT.toFixed(2)}</td>
+              <td class="mt-wt"  style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-weight:800">${data.averageWT.toFixed(2)}</td>
+              <td class="mt-rt"  style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-weight:800">${data.averageRT.toFixed(2)}</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>`;
 
@@ -360,7 +376,7 @@ function showToast(msg) {
     const t = document.createElement("div");
     t.id = "toast";
     t.className = "fixed bottom-6 left-1/2 -translate-x-1/2 z-50";
-    t.style.cssText = `font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:10px 20px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);background:${isDark()?'#00e5ff':'#0c4a6e'};color:${isDark()?'#030d12':'#fff'}`;
+    t.style.cssText = `font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:10px 20px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);background:${isDark() ? '#00e5ff' : '#0c4a6e'};color:${isDark() ? '#030d12' : '#fff'}`;
     t.innerText = msg;
     document.body.appendChild(t);
     setTimeout(() => {
@@ -372,6 +388,10 @@ function showToast(msg) {
 
 /* ── Init ───────────────────────────────────────────────────── */
 window.addEventListener("DOMContentLoaded", () => {
+    // Ensure html has both classes correct on start
+    document.documentElement.classList.add('light');
+    document.documentElement.classList.remove('dark');
+
     setTimeout(() => addProcessRow(), 100);
     setTimeout(() => addProcessRow(), 200);
     setTimeout(() => addProcessRow(), 300);

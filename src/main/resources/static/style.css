@@ -5,153 +5,169 @@
 
 /* ── Background blobs ─────────────────────────────────────── */
 .blob { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.35; animation:blobFloat 12s ease-in-out infinite; }
-.blob-1  { width:500px;height:500px;background:radial-gradient(circle,#7dd3fc,#38bdf8 60%,transparent);top:-120px;left:-100px;animation-delay:0s; }
+.blob-1  { width:500px;height:500px;background:radial-gradient(circle,#7dd3fc,#38bdf8 60%,transparent);top:-120px;left:-100px; }
 .blob-2  { width:400px;height:400px;background:radial-gradient(circle,#bae6fd,#7dd3fc 60%,transparent);bottom:10%;right:-80px;animation-delay:-5s; }
-.blob-d1 { width:600px;height:600px;background:radial-gradient(circle,#00b4d822,#00e5ff11 60%,transparent);top:-150px;left:-150px;animation-delay:0s;filter:blur(100px); }
+.blob-d1 { width:600px;height:600px;background:radial-gradient(circle,#00b4d822,#00e5ff11 60%,transparent);top:-150px;left:-150px;filter:blur(100px); }
 .blob-d2 { width:400px;height:400px;background:radial-gradient(circle,#0ff20011,#00e5ff08 60%,transparent);bottom:5%;right:-100px;animation-delay:-6s;filter:blur(80px); }
-
 @keyframes blobFloat {
-    0%,100% { transform:translate(0,0) scale(1); }
-    33%      { transform:translate(30px,-20px) scale(1.05); }
-    66%      { transform:translate(-20px,15px) scale(0.97); }
+    0%,100%{transform:translate(0,0)scale(1)} 33%{transform:translate(30px,-20px)scale(1.05)} 66%{transform:translate(-20px,15px)scale(.97)}
 }
 
-/* ── Page load animations ─────────────────────────────────── */
+/* ── Animations ───────────────────────────────────────────── */
 @keyframes slideInLeft  { from{opacity:0;transform:translateX(-28px)} to{opacity:1;transform:translateX(0)} }
 @keyframes slideInRight { from{opacity:0;transform:translateX(28px)}  to{opacity:1;transform:translateX(0)} }
 @keyframes fadeInUp     { from{opacity:0;transform:translateY(20px)}  to{opacity:1;transform:translateY(0)} }
 @keyframes rowIn        { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
 @keyframes rowReveal    { from{opacity:0;transform:translateY(8px)}   to{opacity:1;transform:translateY(0)} }
 @keyframes slideDown    { from{opacity:0;max-height:0;transform:translateY(-8px)} to{opacity:1;max-height:120px;transform:translateY(0)} }
-@keyframes logoPulse    { 0%,100%{box-shadow:0 0 0 0 rgba(2,132,199,.4)} 50%{box-shadow:0 0 0 8px rgba(2,132,199,0)} }
-@keyframes logoPulseDark{ 0%,100%{box-shadow:0 0 0 0 rgba(0,229,255,.35)} 50%{box-shadow:0 0 0 10px rgba(0,229,255,0)} }
+@keyframes logoPulse    { 0%,100%{box-shadow:0 0 0 0 rgba(2,132,199,.4)}   50%{box-shadow:0 0 0 8px  rgba(2,132,199,0)} }
+@keyframes logoPulseDk  { 0%,100%{box-shadow:0 0 0 0 rgba(0,229,255,.35)}  50%{box-shadow:0 0 0 10px rgba(0,229,255,0)} }
 
-.anim-left  { animation:slideInLeft  0.5s cubic-bezier(.22,1,.36,1) both; }
-.anim-right { animation:slideInRight 0.5s cubic-bezier(.22,1,.36,1) 0.1s both; }
+.anim-left  { animation:slideInLeft  .5s cubic-bezier(.22,1,.36,1) both; }
+.anim-right { animation:slideInRight .5s cubic-bezier(.22,1,.36,1) .1s both; }
 .logo-pulse { animation:logoPulse 3s ease-in-out infinite; }
-.dark .logo-pulse { animation:logoPulseDark 3s ease-in-out infinite; }
-.row-enter  { animation:rowIn 0.25s cubic-bezier(.22,1,.36,1) both; }
-#results-area { animation:fadeInUp 0.4s cubic-bezier(.22,1,.36,1) both; }
-
-#quantum-container:not(.hidden) { animation:slideDown 0.25s cubic-bezier(.22,1,.36,1) both; overflow:hidden; }
+.dark .logo-pulse { animation:logoPulseDk 3s ease-in-out infinite; }
+.row-enter  { animation:rowIn .25s cubic-bezier(.22,1,.36,1) both; }
+#results-area.visible { animation:fadeInUp .4s cubic-bezier(.22,1,.36,1) both; }
+#quantum-container:not(.hidden) { animation:slideDown .25s cubic-bezier(.22,1,.36,1) both; overflow:hidden; }
 
 /* ── Metric row stagger ───────────────────────────────────── */
-.metric-row { animation:rowReveal 0.3s cubic-bezier(.22,1,.36,1) both; }
-.metric-row:nth-child(1)  { animation-delay:.05s }
-.metric-row:nth-child(2)  { animation-delay:.10s }
-.metric-row:nth-child(3)  { animation-delay:.15s }
-.metric-row:nth-child(4)  { animation-delay:.20s }
-.metric-row:nth-child(5)  { animation-delay:.25s }
-.metric-row:nth-child(n+6){ animation-delay:.30s }
+.metric-row { animation:rowReveal .3s cubic-bezier(.22,1,.36,1) both; }
+.metric-row:nth-child(1){animation-delay:.05s} .metric-row:nth-child(2){animation-delay:.10s}
+.metric-row:nth-child(3){animation-delay:.15s} .metric-row:nth-child(4){animation-delay:.20s}
+.metric-row:nth-child(5){animation-delay:.25s} .metric-row:nth-child(n+6){animation-delay:.30s}
 
-/* ── Gantt container ──────────────────────────────────────── */
-.gantt-container {
-    display:flex; flex-direction:row; flex-wrap:nowrap;
-    overflow-x:auto; align-items:stretch;
-    padding-bottom:38px; padding-top:8px; gap:0;
-    -webkit-overflow-scrolling:touch;
+/* ── Gantt wrapper / layout ───────────────────────────────── */
+.gantt-wrapper {
+    overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px;
     scrollbar-width:thin; scrollbar-color:#0284c7 transparent;
 }
-.dark .gantt-container { scrollbar-color:#00e5ff55 transparent; }
-.gantt-container::-webkit-scrollbar { height:3px; }
-.gantt-container::-webkit-scrollbar-thumb { background:#0284c7; border-radius:99px; }
-.dark .gantt-container::-webkit-scrollbar-thumb { background:#00e5ff55; }
+.dark .gantt-wrapper { scrollbar-color:#00e5ff55 transparent; }
+.gantt-wrapper::-webkit-scrollbar { height:3px; }
+.gantt-wrapper::-webkit-scrollbar-thumb { background:#0284c7; border-radius:99px; }
+.dark .gantt-wrapper::-webkit-scrollbar-thumb { background:#00e5ff55; }
+
+.gantt-inner   { display:inline-flex; flex-direction:column; min-width:100%; }
+.gantt-blocks  { display:flex; flex-direction:row; flex-wrap:nowrap; align-items:stretch; }
+.gantt-timeline{ display:flex; flex-direction:row; position:relative; height:24px; margin-top:6px; }
+
+/* ── Gantt tick ───────────────────────────────────────────── */
+.gantt-tick { position:absolute; top:0; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:2px; }
+.gantt-tick-line  { width:1px; height:6px; }
+.gantt-tick-label { font-family:'JetBrains Mono',monospace; font-size:.6rem; font-weight:700; white-space:nowrap; line-height:1; }
 
 /* ── Gantt block ──────────────────────────────────────────── */
 .gantt-block {
     height:56px; min-width:48px;
     display:flex; align-items:center; justify-content:center;
-    font-weight:800; font-size:.78rem;
-    font-family:'JetBrains Mono',monospace;
-    position:relative; box-sizing:border-box;
-    flex-shrink:0; letter-spacing:.03em;
-    /* overflow:hidden;  <--- Removed this line to fix hidden time markers */
+    font-weight:800; font-size:.78rem; font-family:'JetBrains Mono',monospace;
+    position:relative; box-sizing:border-box; flex-shrink:0;
+    letter-spacing:.03em; overflow:hidden;
     transition:filter .15s ease, transform .15s ease;
+    user-select:none;
 }
 
-/* ── LEFT-TO-RIGHT WIPE ANIMATION ────────────────────────── */
-/* A dark curtain covers each block, then slides away to the right */
+/* ── Wipe reveal animation ────────────────────────────────── */
 @keyframes wipeReveal {
-    0%   { transform: scaleX(1); transform-origin: left center; }
-    100% { transform: scaleX(0); transform-origin: left center; }
+    0%  { transform:scaleX(1); transform-origin:left center; }
+    100%{ transform:scaleX(0); transform-origin:left center; }
 }
-
 .gantt-block::after {
-    content:'';
-    position:absolute;
-    inset:0;
-    background:#f0f9ff;          /* light mode curtain = page bg */
-    transform:scaleX(1);
-    transform-origin:left center;
-    animation:wipeReveal 0.5s cubic-bezier(.65,0,.35,1) forwards;
-    animation-delay: var(--wipe-delay, 0s);
-    z-index:5;
-    pointer-events:none;
-    border-radius:inherit;
+    content:''; position:absolute; inset:0;
+    transform:scaleX(1); transform-origin:left center;
+    animation:wipeReveal .5s cubic-bezier(.65,0,.35,1) forwards;
+    animation-delay:var(--wipe-delay,0s);
+    z-index:5; pointer-events:none; border-radius:inherit;
 }
-.dark .gantt-block::after {
-    background:#030d12;           /* dark mode curtain = page bg */
-}
+/* curtain colour matches page background */
+html.light .gantt-block::after { background:#f0f9ff; }
+html.dark  .gantt-block::after { background:#030d12; }
 
-/* PID label and time markers sit above the curtain */
 .gantt-block > span { position:relative; z-index:6; }
-
-/* Rounded corners */
 .gantt-block:first-child { border-radius:12px 0 0 12px; }
 .gantt-block:last-child  { border-radius:0 12px 12px 0; }
 .gantt-block:only-child  { border-radius:12px; }
-
 .gantt-block:hover { filter:brightness(1.12); transform:scaleY(1.05); z-index:2; }
 
-/* IDLE block */
-.gantt-block.idle-block { background:#e2e8f0; color:#94a3b8; border:2px dashed #cbd5e1; }
-.dark .gantt-block.idle-block { background:#03161e; color:#0e7490; border:2px dashed #083344; }
-.dark .gantt-block.idle-block::after { background:#030d12; }
+/* IDLE */
+.gantt-block.idle-block { border:2px dashed; }
+html.light .gantt-block.idle-block { background:#e2e8f0; color:#94a3b8; border-color:#cbd5e1; }
+html.dark  .gantt-block.idle-block { background:#03161e; color:#0e7490;  border-color:#083344; }
+html.dark  .gantt-block.idle-block::after { background:#030d12; }
 
-/* Time markers */
-.time-marker {
-    position:absolute; bottom:-26px; left:-1px;
-    font-size:.65rem; font-weight:700;
-    font-family:'JetBrains Mono',monospace;
-    color:#7dd3fc; white-space:nowrap;
-    z-index:6;
+/* ── LIGHT process colours ────────────────────────────────── */
+html.light .proc-color-0  {background:#bfdbfe;color:#1e3a8a} html.light .proc-color-1  {background:#bbf7d0;color:#14532d}
+html.light .proc-color-2  {background:#fde68a;color:#78350f} html.light .proc-color-3  {background:#fecdd3;color:#881337}
+html.light .proc-color-4  {background:#ddd6fe;color:#4c1d95} html.light .proc-color-5  {background:#fed7aa;color:#7c2d12}
+html.light .proc-color-6  {background:#a5f3fc;color:#164e63} html.light .proc-color-7  {background:#c7d2fe;color:#312e81}
+html.light .proc-color-8  {background:#fbcfe8;color:#831843} html.light .proc-color-9  {background:#a7f3d0;color:#065f46}
+html.light .proc-color-10 {background:#fef08a;color:#713f12} html.light .proc-color-11 {background:#99f6e4;color:#134e4a}
+html.light .proc-color-12 {background:#e9d5ff;color:#581c87} html.light .proc-color-13 {background:#bae6fd;color:#0c4a6e}
+html.light .proc-color-14 {background:#fca5a5;color:#7f1d1d}
+
+/* ── DARK process colours ─────────────────────────────────── */
+html.dark .proc-color-0  {background:#0c4a6e;color:#7dd3fc} html.dark .proc-color-1  {background:#134e4a;color:#5eead4}
+html.dark .proc-color-2  {background:#164e63;color:#22d3ee} html.dark .proc-color-3  {background:#0e7490;color:#cffafe}
+html.dark .proc-color-4  {background:#155e75;color:#a5f3fc} html.dark .proc-color-5  {background:#065f46;color:#6ee7b7}
+html.dark .proc-color-6  {background:#0f766e;color:#99f6e4} html.dark .proc-color-7  {background:#1e40af;color:#bfdbfe}
+html.dark .proc-color-8  {background:#1d4ed8;color:#dbeafe} html.dark .proc-color-9  {background:#0369a1;color:#e0f2fe}
+html.dark .proc-color-10 {background:#0c4a6e;color:#38bdf8} html.dark .proc-color-11 {background:#0f766e;color:#2dd4bf}
+html.dark .proc-color-12 {background:#155e75;color:#67e8f9} html.dark .proc-color-13 {background:#0e7490;color:#bae6fd}
+html.dark .proc-color-14 {background:#065f46;color:#a7f3d0}
+
+/* ── Metrics table theming via CSS ───────────────────────────
+   All colours are pure CSS variables set on <html> so they
+   respond instantly when the dark class is toggled — no JS
+   re-render needed for the table colours.
+   ─────────────────────────────────────────────────────────── */
+html.light {
+    --mt-wrap:    #f8fafc;
+    --mt-border:  #bae6fd;
+    --mt-head:    #f1f5f9;
+    --mt-headbd:  #e2e8f0;
+    --mt-th:      #7dd3fc;
+    --mt-divider: #e2e8f0;
+    --mt-rowhov:  #f0f9ff;
+    --mt-label:   #94a3b8;
+    --mt-muted:   #94a3b8;
+    --mt-ct:      #0f172a;
+    --mt-tat:     #0284c7;
+    --mt-wt:      #0ea5e9;
+    --mt-rt:      #38bdf8;
 }
-.time-marker.end-marker { left:auto; right:-1px; }
-.dark .time-marker { color:#0e7490; }
+html.dark {
+    --mt-wrap:    #03161e;
+    --mt-border:  #083344;
+    --mt-head:    #020d14;
+    --mt-headbd:  #0a3344;
+    --mt-th:      #0e7490;
+    --mt-divider: #083344;
+    --mt-rowhov:  #071c27;
+    --mt-label:   #0e7490;
+    --mt-muted:   #475569;
+    --mt-ct:      #e2e8f0;
+    --mt-tat:     #00e5ff;
+    --mt-wt:      #22d3ee;
+    --mt-rt:      #67e8f9;
+}
 
-/* ── LIGHT process colors ─────────────────────────────────── */
-.proc-color-0  { background:#bfdbfe; color:#1e3a8a; }
-.proc-color-1  { background:#bbf7d0; color:#14532d; }
-.proc-color-2  { background:#fde68a; color:#78350f; }
-.proc-color-3  { background:#fecdd3; color:#881337; }
-.proc-color-4  { background:#ddd6fe; color:#4c1d95; }
-.proc-color-5  { background:#fed7aa; color:#7c2d12; }
-.proc-color-6  { background:#a5f3fc; color:#164e63; }
-.proc-color-7  { background:#c7d2fe; color:#312e81; }
-.proc-color-8  { background:#fbcfe8; color:#831843; }
-.proc-color-9  { background:#a7f3d0; color:#065f46; }
-.proc-color-10 { background:#fef08a; color:#713f12; }
-.proc-color-11 { background:#99f6e4; color:#134e4a; }
-.proc-color-12 { background:#e9d5ff; color:#581c87; }
-.proc-color-13 { background:#bae6fd; color:#0c4a6e; }
-.proc-color-14 { background:#fca5a5; color:#7f1d1d; }
+/* The metrics table reads those variables */
+#metrics-table-container .mt-wrap    { background:var(--mt-wrap);   border-color:var(--mt-border); }
+#metrics-table-container .mt-head    { background:var(--mt-head);   border-color:var(--mt-headbd); }
+#metrics-table-container .mt-th      { color:var(--mt-th); }
+#metrics-table-container .mt-muted   { color:var(--mt-muted); }
+#metrics-table-container .mt-ct      { color:var(--mt-ct); }
+#metrics-table-container .mt-tat     { color:var(--mt-tat); }
+#metrics-table-container .mt-wt      { color:var(--mt-wt); }
+#metrics-table-container .mt-rt      { color:var(--mt-rt); }
+#metrics-table-container .mt-row     { border-color:var(--mt-divider); }
+#metrics-table-container .mt-row:hover { background:var(--mt-rowhov); }
+#metrics-table-container .mt-foot    { background:var(--mt-head); border-color:var(--mt-border); }
+#metrics-table-container .mt-label   { color:var(--mt-label); }
 
-/* ── DARK process colors — vivid distinct teal/cyan palette ─ */
-.dark .proc-color-0  { background:#0c4a6e; color:#7dd3fc; }
-.dark .proc-color-1  { background:#134e4a; color:#5eead4; }
-.dark .proc-color-2  { background:#164e63; color:#22d3ee; }
-.dark .proc-color-3  { background:#0e7490; color:#cffafe; }
-.dark .proc-color-4  { background:#155e75; color:#a5f3fc; }
-.dark .proc-color-5  { background:#065f46; color:#6ee7b7; }
-.dark .proc-color-6  { background:#0f766e; color:#99f6e4; }
-.dark .proc-color-7  { background:#1e40af; color:#bfdbfe; }
-.dark .proc-color-8  { background:#1d4ed8; color:#dbeafe; }
-.dark .proc-color-9  { background:#0369a1; color:#e0f2fe; }
-.dark .proc-color-10 { background:#0c4a6e; color:#38bdf8; }
-.dark .proc-color-11 { background:#0f766e; color:#2dd4bf; }
-.dark .proc-color-12 { background:#155e75; color:#67e8f9; }
-.dark .proc-color-13 { background:#0e7490; color:#bae6fd; }
-.dark .proc-color-14 { background:#065f46; color:#a7f3d0; }
+/* ── About section border ─────────────────────────────────── */
+.about-section { border-top:1px solid #bae6fd; }
+.dark .about-section { border-color:#083344; }
 
 /* ── Inputs ───────────────────────────────────────────────── */
 input[type="number"] { background-color:transparent !important; -moz-appearance:textfield; }
@@ -160,10 +176,10 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margi
 
 /* ── Toast ────────────────────────────────────────────────── */
 @keyframes toastIn { from{opacity:0;transform:translate(-50%,12px)} to{opacity:1;transform:translate(-50%,0)} }
-#toast { animation:toastIn 0.25s cubic-bezier(.22,1,.36,1) both; }
+#toast { animation:toastIn .25s cubic-bezier(.22,1,.36,1) both; }
 
 /* ── Mobile ───────────────────────────────────────────────── */
-@media (max-width:640px) {
-    .gantt-block { height:46px; min-width:36px; font-size:.7rem; }
-    .blob-1,.blob-2 { width:260px; height:260px; }
+@media(max-width:640px){
+    .gantt-block{height:44px;min-width:34px;font-size:.68rem}
+    .blob-1,.blob-2{width:260px;height:260px}
 }
