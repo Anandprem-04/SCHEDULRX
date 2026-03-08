@@ -13,8 +13,8 @@ const ALGO_INFO = {
     SJF:         "Shortest burst time runs next. Non-preemptive. Optimal avg wait time but may starve long jobs.",
     SRTF:        "Preemptive SJF. A new arrival with shorter remaining time preempts the current process.",
     RR:          "Each process gets a fixed time slice (quantum). Preemptive. Fair but higher context-switch overhead.",
-    PRIORITY_NP: "Highest priority process runs to completion. Non-preemptive. Lower number = higher priority.",
-    PRIORITY_P:  "Higher priority arrival preempts current process. Lower number = higher priority."
+    PRIORITY_NP: "Highest priority process runs to completion. Non-preemptive. Select priority mode below.",
+    PRIORITY_P:  "Higher priority arrival preempts current process. Preemptive. Select priority mode below."
 };
 
 // Colour palettes — index matches proc-color-N in CSS
@@ -39,20 +39,83 @@ function isDark() {
 
 /* ── Theme toggle ───────────────────────────────────────────── */
 function toggleTheme() {
-    const html = document.documentElement;
-    const icon = document.getElementById("theme-icon");
-    const dark = html.classList.toggle('dark');
+    const html      = document.documentElement;
+    const dark      = html.classList.toggle('dark');
     html.classList.toggle('light', !dark);
-    icon.style.transition = 'transform 0.4s ease';
-    icon.style.transform  = 'rotate(360deg)';
-    setTimeout(() => icon.style.transform = '', 400);
-    icon.innerText = dark ? "☀️" : "🌙";
+
+    // Update theme pill
+    const pill      = document.getElementById("theme-pill");
+    const textLight = document.getElementById("theme-text-light");
+    const textDark  = document.getElementById("theme-text-dark");
+    const themeBg   = document.getElementById("theme-toggle");
+
+    if (dark) {
+        // Dark mode — pill slides right, moon highlighted
+        if (pill)      { pill.style.transform = "translateX(100%)"; pill.style.backgroundColor = "#22d3ee"; }
+        if (textLight) { textLight.style.opacity = "0.35"; }
+        if (textDark)  { textDark.style.opacity  = "1"; }
+        if (themeBg)   { themeBg.style.backgroundColor = "#0f172a"; }
+    } else {
+        // Light mode — pill on left, sun highlighted
+        if (pill)      { pill.style.transform = "translateX(0%)"; pill.style.backgroundColor = "#0ea5e9"; }
+        if (textLight) { textLight.style.opacity = "1"; }
+        if (textDark)  { textDark.style.opacity  = "0.35"; }
+        if (themeBg)   { themeBg.style.backgroundColor = "#ffffff"; }
+    }
 
     // Re-render gantt blocks so inline colors update.
-    // Table updates automatically via CSS variables — no JS needed.
     if (lastSimulationData) {
         renderGanttChart(lastSimulationData.ganttBlocks);
     }
+}
+
+/* ── Priority Mode Toggle ───────────────────────────────────── */
+let prioHighIsHigh = false;
+
+function getPillColor() {
+    return isDark() ? "#22d3ee" : "#0ea5e9";
+}
+function getPillTextActive() { return isDark() ? "#0f172a" : "#ffffff"; }
+function getPillTextInactive() { return isDark() ? "#22d3ee" : "#0ea5e9"; }
+
+function togglePriorityMode() {
+    prioHighIsHigh = !prioHighIsHigh;
+
+    const pill     = document.getElementById("prio-pill");
+    const textLow  = document.getElementById("prio-text-low");
+    const textHigh = document.getElementById("prio-text-high");
+    const note     = document.getElementById("prio-note");
+    const toggle   = document.getElementById("prio-toggle");
+    toggle.dataset.state = prioHighIsHigh ? "high" : "low";
+
+    pill.style.backgroundColor = getPillColor();
+
+    if (prioHighIsHigh) {
+        pill.style.transform     = "translateX(100%)";
+        textLow.style.color      = getPillTextInactive();
+        textHigh.style.color     = getPillTextActive();
+        note.innerHTML = "⚡ Higher number = Higher priority (e.g. 3 &gt; 2 &gt; 1)";
+    } else {
+        pill.style.transform     = "translateX(0%)";
+        textLow.style.color      = getPillTextActive();
+        textHigh.style.color     = getPillTextInactive();
+        note.innerHTML = "💡 Lower number = Higher priority (e.g. 1 &gt; 2 &gt; 3) — OS textbook default";
+    }
+}
+
+function resetPriorityToggle() {
+    prioHighIsHigh = false;
+    const pill     = document.getElementById("prio-pill");
+    const textLow  = document.getElementById("prio-text-low");
+    const textHigh = document.getElementById("prio-text-high");
+    const note     = document.getElementById("prio-note");
+    const toggle   = document.getElementById("prio-toggle");
+    if (!toggle) return;
+    toggle.dataset.state = "low";
+    if (pill)     { pill.style.transform = "translateX(0%)"; pill.style.backgroundColor = getPillColor(); }
+    if (textLow)  { textLow.style.color  = getPillTextActive(); }
+    if (textHigh) { textHigh.style.color = getPillTextInactive(); }
+    if (note) note.innerHTML = "💡 Lower number = Higher priority (e.g. 1 &gt; 2 &gt; 3) — OS textbook default";
 }
 
 /* ── Algo change ────────────────────────────────────────────── */
@@ -61,6 +124,12 @@ function handleAlgoChange() {
     const isPriority = algo.startsWith("PRIORITY");
     const qc = document.getElementById("quantum-container");
     algo === "RR" ? qc.classList.remove("hidden") : qc.classList.add("hidden");
+
+    // Show/hide priority mode toggle
+    const pc = document.getElementById("priority-mode-container");
+    isPriority ? pc.classList.remove("hidden") : pc.classList.add("hidden");
+    // Reset to default when switching away
+    if (!isPriority) resetPriorityToggle();
 
     const info = document.getElementById("algo-info");
     info.style.transition = "opacity .2s, transform .2s";
@@ -160,15 +229,25 @@ async function startSimulation() {
     const algo    = document.getElementById("algo-select").value;
     const quantum = algo === "RR" ? (parseInt(document.getElementById("quantum-input")?.value) || 2) : null;
 
-    const payload = {
-        algorithm: algo, quantum,
-        processes: Array.from(rows).map(row => ({
-            pid:         row.querySelector("td:first-child").innerText.trim(),
-            arrivalTime: parseInt(row.querySelector(".at").value)       || 0,
-            burstTime:   Math.max(1, parseInt(row.querySelector(".bt").value) || 1),
-            priority:    row.querySelector(".priority") ? parseInt(row.querySelector(".priority").value) || 1 : 0
-        }))
-    };
+    const isPriority   = algo.startsWith("PRIORITY");
+    const highIsHigh   = isPriority && document.getElementById("prio-toggle")?.dataset.state === "high";
+
+    // Build raw process list
+    let processes = Array.from(rows).map(row => ({
+        pid:         row.querySelector("td:first-child").innerText.trim(),
+        arrivalTime: parseInt(row.querySelector(".at").value)       || 0,
+        burstTime:   Math.max(1, parseInt(row.querySelector(".bt").value) || 1),
+        priority:    row.querySelector(".priority") ? parseInt(row.querySelector(".priority").value) || 1 : 0
+    }));
+
+    // Flip priorities if "Higher number = Higher priority" is selected
+    // Backend always uses lower number = higher priority internally
+    if (isPriority && highIsHigh) {
+        const maxPrio = Math.max(...processes.map(p => p.priority));
+        processes = processes.map(p => ({ ...p, priority: (maxPrio + 1) - p.priority }));
+    }
+
+    const payload = { algorithm: algo, quantum, processes };
 
     const btn = document.getElementById("run-btn");
     btn.innerHTML = "⏳ Running..."; btn.disabled = true; btn.style.opacity = ".7";
@@ -388,9 +467,17 @@ function showToast(msg) {
 
 /* ── Init ───────────────────────────────────────────────────── */
 window.addEventListener("DOMContentLoaded", () => {
-    // Ensure html has both classes correct on start
+    // Ensure light mode on start
     document.documentElement.classList.add('light');
     document.documentElement.classList.remove('dark');
+
+    // Init theme pill — start on light (sun side)
+    const themePill = document.getElementById("theme-pill");
+    const textLight = document.getElementById("theme-text-light");
+    const textDark  = document.getElementById("theme-text-dark");
+    if (themePill) themePill.style.transform = "translateX(0%)";
+    if (textLight) textLight.classList.remove("opacity-50");
+    if (textDark)  textDark.classList.add("opacity-50");
 
     setTimeout(() => addProcessRow(), 100);
     setTimeout(() => addProcessRow(), 200);

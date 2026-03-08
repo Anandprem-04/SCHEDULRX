@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SchedulrX | CPU Scheduler Visualizer</title>
+    <title>SchedulerX | CPU Scheduler Visualizer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
     <script>
@@ -51,7 +51,7 @@
                     <span class="text-white dark:text-cyberbg font-black text-sm font-mono">SX</span>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black tracking-tighter text-skytext dark:text-cybertxt font-mono uppercase leading-none">SchedulrX</h1>
+                    <h1 class="text-lg font-black tracking-tighter text-skytext dark:text-cybertxt font-mono uppercase leading-none">SchedulerX</h1>
                     <p class="text-[9px] font-bold uppercase tracking-widest text-sky-400 dark:text-cyan-800 font-mono hidden sm:block mt-0.5">CPU Scheduling Visualizer</p>
                 </div>
             </div>
@@ -60,10 +60,22 @@
                     class="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 text-xs font-bold rounded-lg uppercase font-mono hover:bg-red-100 dark:hover:bg-red-900/40 transition-all active:scale-95 duration-150">
                     Reset
                 </button>
-                <button onclick="toggleTheme()"
-                    class="w-9 h-9 rounded-xl bg-skycard dark:bg-cyberedge border border-skyedge dark:border-cyan-900 flex items-center justify-center hover:scale-110 transition-all duration-200">
-                    <span id="theme-icon" class="text-base">🌙</span>
-                </button>
+<!-- Theme Toggle Pill -->
+                <div onclick="toggleTheme()" id="theme-toggle"
+                    class="relative flex w-20 h-9 rounded-full cursor-pointer border border-skyedge dark:border-cyberedge bg-white dark:bg-cyberbg overflow-hidden shadow-inner select-none transition-all duration-200 hover:scale-105">
+                    <!-- Sliding pill -->
+                    <div id="theme-pill"
+                        class="absolute top-0 left-0 w-1/2 h-full bg-skyaccent dark:bg-cybertxt rounded-full transition-transform duration-300 ease-in-out z-0">
+                    </div>
+                    <!-- Light side -->
+                    <div class="relative z-10 flex-1 flex items-center justify-center">
+                        <span id="theme-text-light" class="text-sm transition-all duration-300">☀️</span>
+                    </div>
+                    <!-- Dark side -->
+                    <div class="relative z-10 flex-1 flex items-center justify-center">
+                        <span id="theme-text-dark" class="text-sm transition-all duration-300 opacity-50">🌙</span>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -91,6 +103,29 @@
                         <label class="text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-cyan-700 font-mono block mb-1.5">Time Quantum</label>
                         <input type="number" id="quantum-input" min="1" value="2"
                             class="w-full p-3 bg-skybg dark:bg-cyberbg text-skyaccent dark:text-cybertxt border border-skyedge dark:border-cyberedge rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-skyaccent dark:focus:ring-cybertxt transition-all">
+                    </div>
+
+                    <!-- Priority Mode Toggle (Segmented Pill) -->
+                    <div id="priority-mode-container" class="hidden">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-cyan-700 font-mono block mb-3">Priority Mode</label>
+                        <div onclick="togglePriorityMode()" id="prio-toggle"
+                            class="relative flex w-full h-9 rounded-full cursor-pointer border border-skyedge dark:border-cyberedge bg-white dark:bg-cyberbg overflow-hidden shadow-inner select-none">
+                            <!-- Sliding background pill -->
+                            <div id="prio-pill"
+                                class="absolute top-0 left-0 w-1/2 h-full bg-skyaccent dark:bg-cybertxt rounded-full transition-transform duration-300 ease-in-out z-0">
+                            </div>
+                            <!-- LOW side -->
+                            <div class="relative z-10 flex-1 flex items-center justify-center">
+                                <span id="prio-text-low" class="text-[10px] font-black font-mono tracking-widest text-white dark:text-cyberbg transition-colors duration-300">LOW</span>
+                            </div>
+                            <!-- HIGH side -->
+                            <div class="relative z-10 flex-1 flex items-center justify-center">
+                                <span id="prio-text-high" class="text-[10px] font-black font-mono tracking-widest text-skyaccent dark:text-cybertxt transition-colors duration-300">HIGH</span>
+                            </div>
+                        </div>
+                        <p id="prio-note" class="text-[10px] font-mono text-sky-400/70 dark:text-cyan-800 mt-2.5 leading-relaxed">
+                            💡 Lower number = Higher priority (e.g. 1 &gt; 2 &gt; 3) — OS textbook default
+                        </p>
                     </div>
 
                     <button onclick="startSimulation()" id="run-btn"
@@ -176,13 +211,13 @@
                 <div class="bg-white/60 dark:bg-cybercard/80 backdrop-blur-sm rounded-2xl border border-skyedge dark:border-cyberedge p-6">
                     <div class="flex items-center gap-2 mb-4">
                         <span class="text-xl">💡</span>
-                        <p class="text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-cyan-700 font-mono">Why SchedulrX?</p>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-cyan-700 font-mono">Why SchedulerX?</p>
                     </div>
                     <p class="text-sm text-skytext/70 dark:text-slate-400 font-mono leading-relaxed mb-3">
                         CPU scheduling algorithms are a core OS topic — but textbook diagrams are static and hard to verify manually.
                     </p>
                     <p class="text-sm text-skytext/70 dark:text-slate-400 font-mono leading-relaxed mb-4">
-                        SchedulrX was built to help CS/IT college students visualize, verify, and understand all major scheduling algorithms in real time — before exams, assignments, or viva.
+                        SchedulerX was built to help CS/IT college students visualize, verify, and understand all major scheduling algorithms in real time — before exams, assignments, or viva.
                     </p>
                     <ul class="space-y-2">
                         <li class="flex items-start gap-2 text-xs font-mono text-skytext/60 dark:text-slate-500">
@@ -211,17 +246,17 @@
                     </p>
                     <div class="space-y-3">
                         <a href="mailto:anandprem2565@gmail.com"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-skycard dark:bg-cyberbg border border-skyedge dark:border-cyberedge text-skyaccent dark:text-cybertxt text-xs font-bold font-mono hover:border-skyaccent dark:hover:border-cybertxt hover:scale-[1.02] transition-all duration-200">
+                            class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-skycard dark:bg-cyberbg border border-skyedge dark:border-cyberedge text-skyaccent dark:text-cybertxt text-xs font-bold font-mono hover:border-skyaccent dark:hover:border-cybertxt hover:scale-[1.02] transition-all duration-200">
                             <span class="text-base">✉</span>
                             anandprem2565@gmail.com
                         </a>
                         <a href="https://www.linkedin.com/in/anand-prem-0bba95296" target="_blank"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-skycard dark:bg-cyberbg border border-skyedge dark:border-cyberedge text-skyaccent dark:text-cybertxt text-xs font-bold font-mono hover:border-skyaccent dark:hover:border-cybertxt hover:scale-[1.02] transition-all duration-200">
+                            class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-skycard dark:bg-cyberbg border border-skyedge dark:border-cyberedge text-skyaccent dark:text-cybertxt text-xs font-bold font-mono hover:border-skyaccent dark:hover:border-cybertxt hover:scale-[1.02] transition-all duration-200">
                             <span class="text-base font-black">in</span>
                             Anand Prem — LinkedIn
                         </a>
                         <a href="https://github.com/Anandprem-04" target="_blank"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-skycard dark:bg-cyberbg border border-skyedge dark:border-cyberedge text-skyaccent dark:text-cybertxt text-xs font-bold font-mono hover:border-skyaccent dark:hover:border-cybertxt hover:scale-[1.02] transition-all duration-200">
+                            class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-skycard dark:bg-cyberbg border border-skyedge dark:border-cyberedge text-skyaccent dark:text-cybertxt text-xs font-bold font-mono hover:border-skyaccent dark:hover:border-cybertxt hover:scale-[1.02] transition-all duration-200">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="flex-shrink-0">
                                 <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
                             </svg>
@@ -238,7 +273,7 @@
                     <div class="w-6 h-6 rounded-lg bg-skyaccent dark:bg-cybertxt flex items-center justify-center">
                         <span class="text-white dark:text-cyberbg font-black text-[9px] font-mono">SX</span>
                     </div>
-                    <span class="text-xs font-black font-mono text-skytext dark:text-cybertxt">SchedulrX</span>
+                    <span class="text-xs font-black font-mono text-skytext dark:text-cybertxt">SchedulerX</span>
                     <span class="text-[10px] font-mono text-skytext/30 dark:text-slate-700">v2.0</span>
                 </div>
                 <p class="text-[10px] font-mono text-skytext/30 dark:text-slate-700 text-center">
