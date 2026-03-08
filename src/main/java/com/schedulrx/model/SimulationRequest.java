@@ -1,15 +1,13 @@
 package com.schedulrx.model;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.util.List;
 
 @Data
 public class SimulationRequest {
+
 
     @NotBlank(message = "Algorithm must be specified")
     private String algorithm;
@@ -27,12 +25,16 @@ public class SimulationRequest {
     public static class ProcessInput {
 
         @NotBlank(message = "Process ID cannot be blank")
+        @Size(max = 10, message = "PID must be 10 characters or less")
+        @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "PID can only contain letters, numbers, - and _")
         private String pid;
 
         @Min(value = 0, message = "Arrival time must be >= 0")
+        @Max(value = 500, message = "Arrival time must be <= 500")
         private int arrivalTime;
 
         @Min(value = 1, message = "Burst time must be >= 1")
+        @Max(value = 100, message = "Burst time must be <= 100")
         private int burstTime;
 
         // Optional — only used for Priority scheduling

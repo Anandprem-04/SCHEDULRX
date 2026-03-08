@@ -19,16 +19,25 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "https://schedulerx.askanand.me")
 public class SchedulerController {
 
     private final SchedulerService schedulerService;
 
     // Main simulation endpoint
     @PostMapping("/simulate")
-    public ResponseEntity<SimulationResponse> simulate(@Valid @RequestBody SimulationRequest request) {
+    public ResponseEntity<?> simulate(@Valid @RequestBody SimulationRequest request) {
         log.info("Simulation request: algorithm={}, processes={}",
                 request.getAlgorithm(), request.getProcesses().size());
+
+        // Duplicate PID check
+        long uniquePids = request.getProcesses().stream()
+                .map(SimulationRequest.ProcessInput::getPid)
+                .distinct().count();
+        if (uniquePids != request.getProcesses().size()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Duplicate PIDs are not allowed"));
+        }
 
         SimulationResponse response = schedulerService.simulate(request);
         return ResponseEntity.ok(response);
